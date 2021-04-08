@@ -6,5 +6,6 @@
   :dependencies [[org.clojure/clojure "1.10.1"]]
   :main timesheet.core
   :target-path "target/%s"
+  :jvm-opts ["-Dclojure.server.repl={:port 5555 :accept clojure.core.server/repl}"] ; notice that the map is not quoted.
   :profiles {:uberjar {:aot :all
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}})
