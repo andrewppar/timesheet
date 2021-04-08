@@ -1,11 +1,5 @@
 (ns timesheet.time
-  (:require [clojure.string :refer [split
-                                    trim
-                                    starts-with?
-                                    join
-                                    split-lines
-                                    ]]))
-
+  (:require [clojure.string :refer [split]]))
 
 (defrecord Time [hour minute]
   Object
@@ -18,15 +12,15 @@
   (let [hour-minute (split string #":")
         hour   (->> hour-minute first Integer/parseInt)
         minute (->> hour-minute second Integer/parseInt)]
-    (if (or
-         (< hour 0)
-         (> hour 23))
+    (when (or
+           (< hour 0)
+           (> hour 23))
       (throw
        (ex-info "Cannot parse hour-string to time"
                 {:causes #{:hour hour}})))
-    (if (or
-         (< minute 0)
-         (> minute 60))
+    (when (or
+           (< minute 0)
+           (> minute 60))
       (throw
        (ex-info "Cannot parse minute-string to time"
                 {:causes #{:minute minute}})))
@@ -46,13 +40,13 @@
         month (->> month-day-year first Integer/parseInt)
         day   (->> month-day-year second Integer/parseInt)
         year  (Integer/parseInt (nth month-day-year 2))]
-    (if (or (< month 1)
-            (> month 12))
+    (when (or (< month 1)
+              (> month 12))
       (throw
        (ex-info "Cannot parse month"
                 {:causes #{:month month}})))
-    (if (or (< day 0)
-            (> day 31))
+    (when (or (< day 0)
+              (> day 31))
       (throw
        (ex-info "Canonot parse day"
                 {:causes #{:day day}})))

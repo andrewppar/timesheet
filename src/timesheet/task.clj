@@ -1,11 +1,5 @@
 (ns timesheet.task
-  (:require [clojure.string :refer [split
-                                    trim
-                                    starts-with?
-                                    join
-                                    split-lines
-                                    ]]
-            [timesheet.time :as time]))
+  (:require [timesheet.time :as time]))
 
 (defrecord Task [start end date task-group description total-time])
 
@@ -21,6 +15,6 @@
                          (* 60 (:hour end)))]
     (if (< end-minutes start-minutes)
       (throw
-       (ex-info "Task ends before it starts")))
+       (ex-info "Task ends before it starts" {})))
     (let [total-minutes (- end-minutes start-minutes)]
       (->Task start end date group description total-minutes))))

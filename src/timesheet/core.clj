@@ -69,9 +69,10 @@
           parser      (->Parser [] date "" false)]
       (:tasks (reduce parse-line parser as-lines)))))
 
-(defn sum-tasks [tasks]
+(defn sum-tasks
   "Generate the total time for
    a list of tasks in hours"
+  [tasks]
   (/ (reduce
       (fn [acc task]
         (+ acc (:total-time task)))
