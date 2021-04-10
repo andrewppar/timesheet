@@ -52,8 +52,10 @@
                 {:causes #{:day day}})))
     ;; @todo write up a check for appropriate day for month,
     ;; e.g. rule out 2-31
+
     (->Date year month day)))
 
+;; Date Comparator
 (defn date-earlier-than
   "Compare two dates. Return true if
    the first is earlier than the second.
@@ -70,3 +72,13 @@
               :else (if (< day-one day-two)
                       true
                       false)))))
+
+
+(defn today
+  "Get todays date"
+  []
+  (let [date-string (.format
+                     (java.text.SimpleDateFormat.
+                      "MM-dd-yyyy")
+                     (new java.util.Date))]
+    (new-date-from-string date-string)))
