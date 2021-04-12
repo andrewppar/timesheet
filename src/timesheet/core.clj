@@ -79,6 +79,50 @@
       0 tasks)
      60.0))
 
+(defn -generate-group
+  "Generates the string representation
+  of a group."
+  [group group-column-length]
+  (let [group-length (count group)]
+    (if (<= group-length group-column-length)
+      (let [padding-count (-
+                           (+ 5 group-column-length)
+                           group-length)]
+        (str group (apply str (repeat padding-count " "))))
+      (str (subs group 0 group-column-length) "...  "))))
+
+(defn -generate-first-description-line
+  "Generates the first line
+  of a description"
+  [descriptions description-column-length]
+  (let [description (first descriptions)
+        desc-size   (count description)]
+    (if (<= desc-size description-column-length)
+      (let [padding-count (- (+ 5 description-column-length)
+                             desc-size)]
+        (str description
+             (apply
+              str
+              (repeat padding-count " "))))
+      (str (subs description 0 description-column-length) "...  "))))
+
+(defn -generate-postfixes
+  "Generates the strings to which
+   dates are appended.
+  "
+  [groups group-column-length description-column-length]
+  (map
+   (fn [group]
+     (let [task-group (first group)
+           group-tasks (second group)
+           truncated-group (-generate-group task-group group-column-length)
+           group-descriptions (map :description group-tasks)
+           truncated-description (-generate-first-description-line
+                                  group-descriptions description-column-length)
+           total-time         (sum-tasks group-tasks)]
+       (str " " truncated-group " " truncated-description " " total-time "\n")))
+   groups))
+
 (defn show-tasks-at-date
   "Shows tasks associated with
    a date.
@@ -94,42 +138,18 @@
   (let [groups (group-by :task-group tasks)
         group-length 20
         description-length 40
-        postfixes (map
-                   (fn [group]
-                     (let [task-group (first group)
-                           group-tasks (second group)
-                           truncated-group (if (<= (count task-group) group-length)
-                                             (str task-group (apply str
-                                                                    (repeat
-                                                                     (-
-                                                                      (+ 5 group-length)
-                                                                      (count task-group)) " ")))
-                                             (str (subs task-group 0 group-length) "...  "))
-                           group-descriptions (map :description group-tasks)
-                           truncated-description (if (<=
-                                                      (count (first group-descriptions))
-                                                      description-length)
-                                                   (str (first group-descriptions)
-                                                        (apply str
-                                                               (repeat
-                                                                (-
-                                                                 (+ 5 description-length)
-                                                                 (count (first group-descriptions))) " ")))
-                                                   (str
-                                                    (subs
-                                                     (first group-descriptions) 0 description-length)
-                                                    "...  "))
-                           total-time         (sum-tasks group-tasks)]
-                       (str " " truncated-group " " truncated-description " " total-time "\n")))
-                   groups)
+        postfixes  (-generate-postfixes groups group-length description-length)
         date-padding   (apply str (repeat (+ (count date) 7) " "))
+        get-padding    (fn [date type] (when (< (type date) 10) " "))
         start (str
                date
-               (if (< (:day date) 10) " ")
-               (if (< (:month date) 10) " ")
+               (get-padding date :day)
+               (get-padding date :month)
                (first postfixes))
         rest  (reduce (fn [acc task-string] (str acc date-padding task-string)) "" (rest postfixes))]
     (str start rest)))
+
+
 
 ;;; Showing Tasks
 ;;@todo Consider whether there's a better place for this
