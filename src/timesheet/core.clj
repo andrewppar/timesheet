@@ -94,7 +94,7 @@
 (defn -generate-first-description-line
   "Generates the first line
   of a description"
-  [descriptions description-column-length]
+  [descriptions description-column-length truncate-descriptions?]
   (let [description (first descriptions)
         desc-size   (count description)]
     (if (<= desc-size description-column-length)
@@ -104,13 +104,30 @@
              (apply
               str
               (repeat padding-count " "))))
-      (str (subs description 0 description-column-length) "...  "))))
+      (str (subs description 0 description-column-length)
+           (if truncate-descriptions?
+             "...  "
+             "")))))
+
+(defn -generate-other-description-lines
+  [group-descriptions description-column-length group-column-length]
+  (let [date-padding (apply str (repeat 17 " "))
+        group-padding (apply str (repeat (+ group-column-length 0) " "))
+        all-descriptions (reduce str " " group-descriptions)
+        split-descriptions (map (partial apply str)
+                                (partition-all description-column-length all-descriptions))]
+    (map
+     (fn [description]
+       (str date-padding group-padding description "\n"))
+     (rest split-descriptions))))
+
+
 
 (defn -generate-postfixes
   "Generates the strings to which
    dates are appended.
   "
-  [groups group-column-length description-column-length]
+  [groups group-column-length description-column-length truncate-descriptions?]
   (map
    (fn [group]
      (let [task-group (first group)
@@ -118,9 +135,17 @@
            truncated-group (-generate-group task-group group-column-length)
            group-descriptions (map :description group-tasks)
            truncated-description (-generate-first-description-line
-                                  group-descriptions description-column-length)
-           total-time         (sum-tasks group-tasks)]
-       (str " " truncated-group " " truncated-description " " total-time "\n")))
+                                  group-descriptions description-column-length truncate-descriptions?)
+           total-time         (sum-tasks group-tasks)
+           first-line (str
+                       " " truncated-group " " truncated-description " " total-time "\n")]
+       (if truncate-descriptions?
+         first-line
+         (let [continued-descriptions (-generate-other-description-lines
+                                       group-descriptions
+                                       description-column-length
+                                       group-column-length)]
+           (reduce str first-line continued-descriptions)))))
    groups))
 
 (defn show-tasks-at-date
@@ -134,11 +159,12 @@
   ;; Options to handle next:
   ;; 1. Don't truncate descriptions
   ;; 2. Don't truncate task group
-  [date tasks]
+  [date tasks truncate-descriptions?]
   (let [groups (group-by :task-group tasks)
         group-length 20
         description-length 40
-        postfixes  (-generate-postfixes groups group-length description-length)
+        postfixes  (-generate-postfixes
+                    groups group-length description-length truncate-descriptions?)
         date-padding   (apply str (repeat (+ (count date) 7) " "))
         get-padding    (fn [date type] (when (< (type date) 10) " "))
         start (str
@@ -159,26 +185,34 @@
 
   Takes a list of tasks and generates a
   string representation of them."
-  [tasks]
+  [tasks truncate-descriptions?]
   (let [dates (group-by :date tasks)]
     (str
      (reduce
-     (fn [acc group]
-       (let [date (first group)
-             date-tasks (second group)]
-         (str acc
-              (show-tasks-at-date date date-tasks))))
-     "" dates)
+      (fn [acc group]
+        (let [date (first group)
+              date-tasks (second group)]
+          (str acc
+               (show-tasks-at-date date date-tasks truncate-descriptions?))))
+      "" dates)
      "\n"
      (apply str (repeat 90 "-"))
      "\n"
      (sum-tasks tasks))))
 
 (defn -main
-  [date]
-  (let [root  "/Users/andrew/Documents/Records_flat"
-        filepath (str root "/" date)]
-    (->> filepath
-         parse-task-file
-         show-tasks
-         println)))
+  ([dates]
+   (-main dates true))
+  ([dates truncate-descriptions?]
+   (let [root  "/Users/andrew/Documents/Records_flat"
+         filepaths (map (fn [date] (str root "/" date)) dates)
+         tasks     (reduce (fn [acc filepath]
+                             (concat acc (parse-task-file filepath)))
+                           [] filepaths)]
+     (show-tasks tasks false))))
+
+
+
+;;(do
+;;  (require '[clojure.tools.namespace.repl :refer [refresh]])
+;;  (refresh))

@@ -15,7 +15,7 @@
 
 (deftest new-date-from-string-test
   (let [result (new-date-from-string "10-11-1987")]
-    (is (= (->Date 1987 10 11)))))
+    (is (= (->Date 1987 10 11) result))))
 
 (deftest new-date-from-string-bad-month
   (is (thrown? Exception (new-date-from-string "13-12-1066"))))
@@ -60,6 +60,6 @@
   (let [date-one (->Date 1987 12 11)
         date-two (->Date 1987 12 11)]
     (is (not (date-earlier-than date-one date-two)))
-    (is (date-earlier-than date-two date-one))
+    (is (not (date-earlier-than date-two date-one)))
     (is (not (date-earlier-than date-one date-one)))
     (is (not (date-earlier-than date-two date-two)))))

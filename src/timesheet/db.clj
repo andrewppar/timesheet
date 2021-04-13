@@ -1,5 +1,4 @@
-(ns timesheet.db
-  (:require [timesheet.core :as parser]))
+(ns timesheet.db)
 
 (def month-threshold-map
   "A map of months to the number of days in them"

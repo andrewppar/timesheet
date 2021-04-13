@@ -61,8 +61,12 @@
    the first is earlier than the second.
    Otherwise return false."
   [date-one date-two]
-  (let [{:keys [year-one month-one day-one]} date-one
-        {:keys [year-two month-two day-two]} date-two]
+  (let [year-one  (:year date-one)
+        year-two  (:year date-two)
+        month-one (:month date-one)
+        month-two (:month date-two)
+        day-one   (:day date-one)
+        day-two   (:day date-two)]
     (cond
       (< year-one year-two) true
       (> year-one year-two) false
