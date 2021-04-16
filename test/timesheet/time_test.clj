@@ -66,26 +66,26 @@
 
 (deftest next-date-test
   (do
-    (is (next-date (->Date 2020 12 31)) (->Date 2021 1 1))
-    (is (next-date (->Date 1987 10 10)) (->Date 1988 10 11))
-    (is (next-date (->Date 1988 1  31)) (->Date 1988 2 1))
-    (is (next-date (->Date 1989 2  28)) (->Date 1989 3 1))
-    (is (next-date (->Date 1990 3  31)) (->Date 1990 4 1))
-    (is (next-date (->Date 1991 4  30)) (->Date 1991 5 1))
-    (is (next-date (->Date 1992 5  31)) (->Date 1992 6 1))
-    (is (next-date (->Date 1993 6  30)) (->Date 1993 7 1))
-    (is (next-date (->Date 1994 7  31)) (->Date 1994 8 1))
-    (is (next-date (->Date 1995 8  31)) (->Date 1995 9 1))
-    (is (next-date (->Date 1996 9  30)) (->Date 1996 10 1))
-    (is (next-date (->Date 1997 10 31)) (->Date 1997 11 1))
-    (is (next-date (->Date 1998 11 30)) (->Date 1998 12 1))
-    (is (next-date (->Date 1999 12 31)) (->Date 2000 1 1))
+    (is (= (next-date (->Date 2020 12 31)) (->Date 2021 1 1)))
+    (is (= (next-date (->Date 1987 10 10)) (->Date 1987 10 11)))
+    (is (= (next-date (->Date 1988 1  31)) (->Date 1988 2 1)))
+    (is (= (next-date (->Date 1989 2  28)) (->Date 1989 3 1)))
+    (is (= (next-date (->Date 1990 3  31)) (->Date 1990 4 1)))
+    (is (= (next-date (->Date 1991 4  30)) (->Date 1991 5 1)))
+    (is (= (next-date (->Date 1992 5  31)) (->Date 1992 6 1)))
+    (is (= (next-date (->Date 1993 6  30)) (->Date 1993 7 1)))
+    (is (= (next-date (->Date 1994 7  31)) (->Date 1994 8 1)))
+    (is (= (next-date (->Date 1995 8  31)) (->Date 1995 9 1)))
+    (is (= (next-date (->Date 1996 9  30)) (->Date 1996 10 1)))
+    (is (= (next-date (->Date 1997 10 31)) (->Date 1997 11 1)))
+    (is (= (next-date (->Date 1998 11 30)) (->Date 1998 12 1)))
+    (is (= (next-date (->Date 1999 12 31)) (->Date 2000 1 1)))
     (is (thrown? Exception
                  (next-date (->Date 10 35 2021))))
     (is (thrown? Exception
                  (next-date (->Date 2021 2 29 ))))
-    (is (next-date (->Date 2020 2 29)) (->Date 2020 3 1))
-    (is (next-date (->Date 2000 2 28)) (->Date 2000 2 29))))
+    (is (= (next-date (->Date 2020 2 29)) (->Date 2020 3 1)))
+    (is (= (next-date (->Date 2000 2 28)) (->Date 2000 2 29)))))
 
 
 

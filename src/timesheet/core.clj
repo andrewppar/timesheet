@@ -81,7 +81,6 @@
                            [] filepaths)]
      (serialize/tabular-show-tasks tasks truncate-descriptions?))))
 
-
 (comment
   (do
     (require '[clojure.tools.namespace.repl :refer [refresh]])

@@ -162,4 +162,16 @@
 ;;; Serialize ;;;
 ;;;;;;;;;;;;;;;;;
 
-(defn tasks-by-date-and-group (start-date end-date)
+(defn tasks-by-date-and-group
+  "
+  Serialize JSON for Tasks grouped
+  by the date that they occur and
+  the group that they done for.
+  "
+  [tasks]
+  (let [dates (group-by :date tasks)]
+    (map
+     (fn [[date date-tasks]]
+       {"date" date
+        "tasks" (tasks-by-group tasks)})
+     dates)))

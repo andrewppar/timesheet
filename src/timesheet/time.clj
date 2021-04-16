@@ -107,12 +107,14 @@
     (throw
      (Exception. (format "%s is not a valid date" date)))
     (let [{:keys [year month day]} date
-          max-day ((keyword (str month)) month-threshold-map)]
+          max-day (if (and (= month 2) (leap-year? year))
+                    29
+                    ((keyword (str month)) month-threshold-map))]
       (if (not (= day max-day))
         (->Date year month (+ day 1))
-        (cond (= month 12) (->Date (+ year 1) 1 1)
-              (and (= month 2) (leap-year? year)) (->Date year 2 29)
-              :else (->Date year (+ month 1) (+ day 1)))))))
+        (if (= month 12)
+          (->Date (+ year 1) 1 1)
+          (->Date year (+ month 1) 1))))))
 
 ;; Date Comparator
 (defn date-earlier-than
@@ -146,10 +148,6 @@
                      (new java.util.Date))]
     (new-date-from-string date-string)))
 
-
-
-
-
 (defn -week
   "Given a month and day generate the next
    seven days"
@@ -175,5 +173,5 @@
   [start-date end-date]
   (loop [current-date start-date acc []]
     (if (= current-date end-date)
-      (conj current-date acc)
-      (recur (next-date current-date) (conj current-date acc)))))
+      (conj acc current-date)
+      (recur (next-date current-date) (conj acc current-date)))))
