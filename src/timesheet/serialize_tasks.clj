@@ -1,5 +1,6 @@
 (ns timesheet.serialize_tasks
-  (:require [timesheet.task_utilities :as utils]))
+  (:require [cheshire.core :as cheshire]
+            [timesheet.task :as task]))
 
 
 ;;;;;;;;;;;;;;;
@@ -61,7 +62,7 @@
            group-descriptions (map :description group-tasks)
            truncated-description (-generate-first-description-line
                                   group-descriptions description-column-length truncate-descriptions?)
-           total-time         (utils/sum-tasks group-tasks)
+           total-time         (task/sum-tasks group-tasks)
            first-line (str
                        " " truncated-group " " truncated-description " " total-time "\n")]
        (if truncate-descriptions?
@@ -121,14 +122,14 @@
      "\n"
      (apply str (repeat 90 "-"))
      "\n"
-     (utils/sum-tasks tasks))))
+     (task/sum-tasks tasks))))
 
 ;;;;;;;;;;;
-;;; Org ;;;
+;;; org ;;;
 ;;;;;;;;;;;
 
 (defn org-show-tasks-by-group
-  "Generate an org representation
+  "generate an org representation
   of tasks by group"
   [tasks]
   (let [groups (group-by :task-group tasks)]
@@ -145,7 +146,7 @@
      groups)))
 
 (defn org-show-tasks-by-date
-  "Generate a string representation
+  "generate a string representation
   of a list of tasks as an org hierarchy. "
   [tasks]
   (let [dates (group-by :date tasks)]
@@ -159,8 +160,30 @@
      "" dates)))
 
 ;;;;;;;;;;;;;;;;;
-;;; Serialize ;;;
+;;; serialize ;;;
 ;;;;;;;;;;;;;;;;;
+
+(defn serialize-tasks
+  "serialize a set of tasks
+
+  the information serialized for
+  each task includes the description
+  and for the entire group the total is
+  included.
+  "
+  [tasks]
+  {"tasks" (map :description tasks)})
+
+(defn tasks-by-group
+  "serialize tasks by the group
+  that they are a part of."
+  [tasks]
+  (let [groups (group-by :task-group tasks)]
+    (map
+     (fn [[group group-tasks]]
+     {"group" group
+      "tasks" (serialize-tasks group-tasks)})
+    groups)))
 
 (defn tasks-by-date-and-group
   "
@@ -170,8 +193,53 @@
   "
   [tasks]
   (let [dates (group-by :date tasks)]
-    (map
-     (fn [[date date-tasks]]
-       {"date" date
-        "tasks" (tasks-by-group tasks)})
-     dates)))
+    (cheshire/encode 
+     {"task-list" 
+      (map
+       (fn [[date date-tasks]]
+         {"date" date
+          "tasks" (tasks-by-group date-tasks)
+          "time" (task/sum-tasks tasks)})
+       dates)})))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Serialize For DB File ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn serialize-task-to-file-format
+  "Write task to string as db format"
+  [task]
+  (let [{:keys [start end description]} task]
+    (str start " -- " end " * " description "\n")))
+
+(defn -serialize-group-to-file-format
+  "Write a group of tasks as a file
+  assumes that all tasks in the list belong
+  to the same group"
+  [group tasks]
+  (str "{"
+       group
+       "\n"
+       (reduce
+        (fn [acc task]
+          (str acc (serialize-task-to-file-format task)))
+        ""
+        tasks)
+       "}\n\n"))
+
+(defn to-file-format
+  "Create a string representation
+  of a list of tasks to be written to disk
+  "
+  [tasks]
+  (let [dates (->> tasks
+                   (map :date)
+                   distinct)]
+    (when (not (= (count dates) 1))
+      (throw
+       (ex-info "Can only write tasks from a single date" {})))
+    (let [groups (group-by :task-group tasks)]
+      (reduce
+       (fn [acc [group group-tasks]]
+         (str acc (-serialize-group-to-file-format group group-tasks)))
+       "" groups))))

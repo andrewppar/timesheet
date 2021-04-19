@@ -13,8 +13,19 @@
                          (* 60 (:hour start)))
         end-minutes   (+ (:minute end)
                          (* 60 (:hour end)))]
-    (if (< end-minutes start-minutes)
+    (when (< end-minutes start-minutes)
       (throw
        (ex-info "Task ends before it starts" {})))
     (let [total-minutes (- end-minutes start-minutes)]
       (->Task start end date group description total-minutes))))
+
+
+(defn sum-tasks
+  "Generate the total time for
+   a list of tasks in hours"
+  [tasks]
+  (/ (reduce
+      (fn [acc task]
+        (+ acc (:total-time task)))
+      0 tasks)
+     60.0))

@@ -4,7 +4,10 @@
 (defrecord Time [hour minute]
   Object
   (toString [_]
-    (str hour ":" minute)))
+    (let [minute-string (if (< 10 minute)
+                          (str 0 minute)
+                          minute)]
+    (str hour ":" minute-string))))
 
 (defn new-time-from-string
   "Contructor for the Time record from string"
