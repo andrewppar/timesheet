@@ -1,5 +1,5 @@
 (ns timesheet.serialize_tasks
-  (:require [cheshire.core :as cheshire]
+  (:require [clojure.data.json :as json]
             [timesheet.task :as task]))
 
 
@@ -193,14 +193,14 @@
   "
   [tasks]
   (let [dates (group-by :date tasks)]
-    (cheshire/encode 
-     {"task-list" 
-      (map
-       (fn [[date date-tasks]]
-         {"date" date
-          "tasks" (tasks-by-group date-tasks)
-          "time" (task/sum-tasks tasks)})
-       dates)})))
+    (str (json/write-str
+          {"task-list" 
+           (map
+            (fn [[date date-tasks]]
+              {"date" date
+               "tasks" (tasks-by-group date-tasks)
+               "time" (task/sum-tasks tasks)})
+            dates)}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Serialize For DB File ;;;
