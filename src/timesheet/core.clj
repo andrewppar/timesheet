@@ -1,19 +1,31 @@
 (ns timesheet.core
   (:gen-class)
-  (:require [ring.middleware.defaults :refer :all]
+  (:require [ring.middleware.defaults :as middleware]
             [org.httpkit.server :as server]
             [timesheet.db :as db]
             [timesheet.serialize_tasks :as serialize]
             [timesheet.api :as api]
             ))
 
+(defonce server (atom []))
+
+
+(defn stop-server []
+  (when-not (nil? @server)
+    ;; graceful shutdown: wait 100ms for existing requests to be finished
+    ;; :timeout is optional, when no timeout, stop immediately
+    (@server :timeout 100)
+    (println "Stopping tasks webserver")
+    (reset! server nil)))
+
 (defn -main
   "This is the main point of entry to the app"
-  [& args]
+  [& _]
   (let [port (Integer/parseInt (or (System/getenv "PORT") "3000"))]
     ;; Run the server with the Ring.defaults middleware
-    (server/run-server (wrap-defaults #'api/app-routes site-defaults)
-                       {:port port})
+    (reset! server (server/run-server
+                    (middleware/wrap-defaults #'api/app-routes middleware/site-defaults)
+                    {:port port}))
     (println (str "Running tasks webserver at localhost:" port "/"))))
 
 (defn get-tasks-main

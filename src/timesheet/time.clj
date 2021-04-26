@@ -4,10 +4,13 @@
 (defrecord Time [hour minute]
   Object
   (toString [_]
-    (let [minute-string (if (< 10 minute)
+    (let [minute-string (if (< minute 10)
                           (str 0 minute)
-                          minute)]
-    (str hour ":" minute-string))))
+                          (str minute))
+          hour-string (if (< hour 10)
+                        (str 0 hour)
+                        (str hour))]
+      (str hour-string ":" minute-string))))
 
 (defn new-time-from-string
   "Contructor for the Time record from string"
@@ -36,7 +39,9 @@
 (defrecord Date [year month day]
   Object
   (toString [_]
-    (str month "-" day "-" year)))
+    (let [month-string (if (< month 10) (str "0" month) (str month))
+          day-string (if (< day 10) (str "0" day) (str day))]
+    (str month-string "-" day-string "-" year))))
 
 (defn new-date-from-string
   "Constructor for the Date record from string

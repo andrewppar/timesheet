@@ -9,7 +9,8 @@
                                     ]]
             [timesheet.globals :as global]
             [timesheet.serialize_tasks :as serialize]
-            [timesheet.task :as task]))
+            [timesheet.task :as task]
+            [timesheet.time :as time]))
 
 ;; Database
 
@@ -81,6 +82,23 @@
       (:tasks (reduce parse-line parser as-lines)))))
 
 
+(defn parse-dates
+  "Generate all the tasks between the two given dates
+
+  Takes a start date an end date, and a base directory
+  and returns all the tasks contained in the database
+  for the dates between the start and the end  inclusively
+  "
+  [start-date end-date base-directory]
+  (let [dates (time/dates-in-range start-date end-date)]
+    (reduce
+     (fn [acc date]
+       (->> date
+            (str base-directory "/")
+            parse-task-file
+            (concat acc)))
+     [] dates)))
+
 ;; Adding Tasks
 
 (defn add-task
@@ -98,8 +116,3 @@
         updated-tasks (conj tasks new-task)]
     (with-open [w (clojure.java.io/writer filepath :overwrite true)]
       (.write w (serialize/to-file-format updated-tasks)))))
-
-
-
-
-

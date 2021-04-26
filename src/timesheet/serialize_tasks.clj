@@ -243,3 +243,26 @@
        (fn [acc [group group-tasks]]
          (str acc (-serialize-group-to-file-format group group-tasks)))
        "" groups))))
+
+;;;;;;;;;;;;;;;;;;;;;;
+;;; Serialize Date ;;;
+;;;;;;;;;;;;;;;;;;;;;;
+
+(defn serialize-date
+  "Generate JSON representing the
+  tasks for a particular date
+
+  NOTE: Assumes that the tasks are
+  all from the same date.
+  "
+  [tasks]
+  (let [groups (group-by :task-group tasks)]
+    (json/write-str
+     (map (fn [[task-group group-tasks]]
+            {:group task-group
+             :tasks (map (fn [{:keys [start end description]}]
+                           {:start start
+                            :end end
+                            :description description})
+                         group-tasks)})
+          groups))))
