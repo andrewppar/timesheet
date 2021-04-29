@@ -24,7 +24,9 @@
   (let [port (Integer/parseInt (or (System/getenv "PORT") "3000"))]
     ;; Run the server with the Ring.defaults middleware
     (reset! server (server/run-server
-                    (middleware/wrap-defaults #'api/app-routes middleware/site-defaults)
+                    (middleware/wrap-defaults
+                     #'api/app-routes
+                     middleware/api-defaults)
                     {:port port}))
     (println (str "Running tasks webserver at localhost:" port "/"))))
 
