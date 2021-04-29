@@ -85,12 +85,14 @@
 (defn parse-dates
   "Generate all the tasks between the two given dates
 
-  Takes a start date an end date, and a base directory
+  Takes a start date string an end date string, and a base directory
   and returns all the tasks contained in the database
   for the dates between the start and the end  inclusively
   "
-  [start-date end-date base-directory]
-  (let [dates (time/dates-in-range start-date end-date)]
+  [start-date-string end-date-string base-directory]
+  (let [start-date (time/new-date-from-string start-date-string)
+        end-date   (time/new-date-from-string end-date-string)
+        dates (time/dates-in-range start-date end-date)]
     (reduce
      (fn [acc date]
        (->> date
@@ -112,7 +114,8 @@
                   start-time
                   end-time
                   date
-                  group description)
+                  group
+                  description)
         updated-tasks (conj tasks new-task)]
     (with-open [w (clojure.java.io/writer filepath :overwrite true)]
       (.write w (serialize/to-file-format updated-tasks)))))

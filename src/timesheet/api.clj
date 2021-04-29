@@ -17,38 +17,53 @@
 (defn -serialize-tasks-by-date
   "Serialize the tasks for a date range"
   [req]
-  (let [start (->> req
-                   :params
-                   :start
-                   time/new-date-from-string)
-        end (if-let [raw-end (->> req
-                                  :params
-                                  :end)]
-              (time/new-date-from-string raw-end)
-              start)
-        tasks (db/parse-dates start end globals/db-root)]
+  (let [start (->> req :params :start)
+        tasks (if-let [end (->> req :params :end)]
+                (db/parse-dates start end   globals/db-root)
+                (db/parse-dates start start globals/db-root))]
     (serialize/tasks-by-date-and-group tasks)))
 
 (defn serialize-tasks-by-date
   "A dispatcher for different ways of getting task information"
   [req]
   {:status 200
-   :headers {"Content-Type" "text/html"}
+   :headers {"Content-Type" "text/json"}
    :body (-serialize-tasks-by-date req) 
    })
 
 (defn serialize-date-tasks
   "A dispatcher to get the tasks for a date"
   [req]
-  (->> req
-       :params
-       :date
-       (str globals/db-root "/")
-       db/parse-task-file
-       serialize/serialize-date))
+  {:status 200
+   :headers {"Content-Type" "text/json"}
+   :body (->> req
+              :params
+              :date
+              (str globals/db-root "/")
+              db/parse-task-file
+              serialize/serialize-date)})
+
+(defn -add-task-from-request
+  "Pulls out information from a request
+  and adds the corresponding task to the database"
+  [req]
+  (let [date  (->> req :params :date)
+        start (->> req :params :start)
+        end   (->> req :params :end)
+        group (->> req :params :group)
+        desc  (->> req :params :description)]
+    (db/add-task date start end group desc)))
+
+(defn add-task
+  "A dispatcher to add a new task to the database"
+  [req]
+  {:status 200
+   :headers {"Content-Type" "text/json"}
+   :body (-add-task-from-request req)})
 
 (compojure/defroutes app-routes
   (compojure/GET "/" [] introduction)
   (compojure/GET "/tasks-by-date" [] serialize-tasks-by-date)
   (compojure/GET "/date" [] serialize-date-tasks)
+  (compojure/POST "/add" [] add-task)
   (route/not-found "Error, page not found!"))
