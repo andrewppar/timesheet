@@ -163,8 +163,8 @@
 ;;; serialize ;;;
 ;;;;;;;;;;;;;;;;;
 
-(defn serialize-tasks
-  "serialize a set of tasks
+(defn -tasks-descriptions
+  "get the descriptions for a set of tasks
 
   the information serialized for
   each task includes the description
@@ -172,7 +172,7 @@
   included.
   "
   [tasks]
-  {"tasks" (map :description tasks)})
+  (map :description tasks))
 
 (defn tasks-by-group
   "serialize tasks by the group
@@ -182,7 +182,7 @@
     (map
      (fn [[group group-tasks]]
      {"group" group
-      "tasks" (serialize-tasks group-tasks)})
+      "tasks" (-tasks-descriptions group-tasks)})
     groups)))
 
 (defn tasks-by-date-and-group
