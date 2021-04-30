@@ -1,7 +1,13 @@
 (ns timesheet.db_test
   (:require [clojure.test :refer :all]
             [timesheet.task :refer :all]
+            [timesheet.globals :as global]
             [timesheet.db :refer :all]))
+
+(def test-db-root  
+
+(defn set-up [test]
+  (with-redefs [global/db-root "test/timesheet/test
 
 (deftest parse-line-not-within-group
   (let [old-parser (->Parser [] "12-05-1989" "group" false)
@@ -39,3 +45,18 @@
   (let [old-parser (->Parser [] "12-05-1989" "Group" true)
         line       "{new group"]
     (is (thrown? Exception (parse-line old-parser line)))))
+
+
+(deftest test-add-task
+  (with-redefs [global/db-root       "test/timesheet/test_assets"]
+    (let [date          "01-07-2020"
+          initial-count (->> (str global/db-root "/" date)
+                                   parse-task-file
+                                   count)]
+    (add-task  date "08:00" "09:00" "Life" "Buy a House")
+    (is (= (+ initial-count 1) (->> (str global/db-root "/" date)
+                                    parse-task-file
+                                    count))))))
+
+
+    
