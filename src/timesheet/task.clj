@@ -29,3 +29,11 @@
         (+ acc (:total-time task)))
       0 tasks)
      60.0))
+
+(defn task-earlier?
+  "Check whether the first task
+  started earlier than the second"
+  [task-one task-two]
+  (let [start-one (:start task-one)
+        start-two (:start task-two)]
+    (time/earlier? start-one start-two)))

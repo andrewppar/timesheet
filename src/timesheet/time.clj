@@ -32,6 +32,19 @@
                 {:causes #{:minute minute}})))
     (->Time hour minute)))
 
+(defn earlier?
+  "Check whether one time
+  is earlier than another"
+  [time-one time-two]
+  (let [hour-one (:hour time-one)
+        hour-two (:hour time-two)]
+    (cond (< hour-one hour-two) true
+          (> hour-one hour-two) false
+          (= hour-one hour-two) (<
+                                 (:minute time-one)
+                                 (:minute time-two)))))
+
+
 ;;;;;;;;;;;;;
 ;;; Dates ;;;
 ;;;;;;;;;;;;;

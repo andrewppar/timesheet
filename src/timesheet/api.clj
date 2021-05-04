@@ -3,8 +3,7 @@
             [timesheet.serialize_tasks :as serialize]
             [timesheet.db :as db]
             [timesheet.globals :as globals]
-            [compojure.route :as route]
-            [timesheet.time :as time]))
+            [compojure.route :as route]))
 
 (defn introduction
   "A welcome page for anyone who has
@@ -61,9 +60,26 @@
    :headers {"Content-Type" "text/json"}
    :body (-add-task-from-request req)})
 
+(defn -delete-task-from-request
+  "Pulls out information from a
+  request and deletes the corresponding task"
+  [req]
+  (let [date  (->> req :params :date)
+        start (->> req :params :start)
+        end   (->> req :params :end)]
+    (db/delete-task date start end)))
+
+(defn delete-task
+  "A dispatcher to remove a task from the database"
+  [req]
+  {:status 200
+   :headers {"Content-Type" "text/json"}
+   :body (-delete-task-from-request req)})
+
 (compojure/defroutes app-routes
   (compojure/GET "/" [] introduction)
   (compojure/GET "/tasks-by-date" [] serialize-tasks-by-date)
   (compojure/GET "/date" [] serialize-date-tasks)
   (compojure/POST "/add" [] add-task)
+  (compojure/POST "/delete" [] delete-task)
   (route/not-found "Error, page not found!"))

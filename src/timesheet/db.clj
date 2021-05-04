@@ -20,7 +20,6 @@
   [date]
   (str global/db-root "/" date))
 
-;; Parsing Tasks
 
 (defrecord Parser [tasks current-date current-group within-group?])
 
@@ -101,6 +100,12 @@
             (concat acc)))
      [] dates)))
 
+(defn -write-tasks
+  "Wirte tasks to the database"
+  [tasks path]
+(with-open [w (clojure.java.io/writer path :overwrite true)]
+      (.write w (serialize/to-file-format tasks))))
+
 ;; Adding Tasks
 
 (defn add-task
@@ -117,5 +122,35 @@
                   group
                   description)
         updated-tasks (conj tasks new-task)]
-    (with-open [w (clojure.java.io/writer filepath :overwrite true)]
-      (.write w (serialize/to-file-format updated-tasks)))))
+    (-write-tasks updated-tasks filepath)))
+
+;; Deleting Tasks
+
+(defn delete-task
+  "Removes a task from the database
+
+  Looks for a task matching the day and time
+  that its passed. If it finds one it deletes that task
+  othwerwise it throws an error"
+  [date start-time end-time]
+  (let [filepath     (task-file date)
+        tasks        (parse-task-file filepath)
+        delete-start (time/new-time-from-string start-time)
+        delete-end   (time/new-time-from-string end-time)
+        new-tasks    (filter (fn [task]
+                               (let [start (:start task)
+                                     end   (:end task)]
+                                 (not
+                                  (or (= start delete-start)
+                                      (= end   delete-end)))))
+                             tasks)]
+    (if (= (count tasks) (count new-tasks))
+      (throw
+       (ex-info (str "Could not find a task to delete for "
+                     date
+                     " "
+                     start-time
+                     " "
+                     end-time)
+                {:causes #{:date date :start start-time :end end-time}}))
+      (-write-tasks new-tasks filepath))))

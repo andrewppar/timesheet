@@ -1,13 +1,31 @@
 (ns timesheet.db_test
-  (:require [clojure.test :refer :all]
-            [timesheet.task :refer :all]
-            [timesheet.globals :as global]
-            [timesheet.db :refer :all]))
+  (:require
+            [clojure.test :refer [deftest is use-fixtures]]
+            [timesheet.db :refer [->Parser
+                                  parse-line
+                                  parse-task-file
+                                  delete-task
+                                  add-task]]
+            [timesheet.globals :refer [db-root]]
+            [timesheet.task :refer [new-task]]))
 
-(def test-db-root  
+(def test-db-root  "test/timesheet/test_assets/")
 
-(defn set-up [test]
-  (with-redefs [global/db-root "test/timesheet/test
+(defn set-up [test-function]
+  (with-redefs [db-root test-db-root]
+    (spit (str db-root "01-07-2020")
+          (str "{Intro\n"
+               "09:00 -- 09:30 * A Clean Test\n"
+               "10:00 -- 11:00 * Another task \n"
+               "}\n")))
+  (test-function)
+  (with-redefs [db-root test-db-root]
+    (spit (str db-root "01-07-2020")
+          (str "{Intro\n"
+               "09:00 -- 09:30 * A Clean Test\n"
+               "}\n"))))
+
+(use-fixtures :each set-up)
 
 (deftest parse-line-not-within-group
   (let [old-parser (->Parser [] "12-05-1989" "group" false)
@@ -46,17 +64,24 @@
         line       "{new group"]
     (is (thrown? Exception (parse-line old-parser line)))))
 
-
-(deftest test-add-task
-  (with-redefs [global/db-root       "test/timesheet/test_assets"]
+(deftest add-task-one
+  (with-redefs [db-root test-db-root]
     (let [date          "01-07-2020"
-          initial-count (->> (str global/db-root "/" date)
-                                   parse-task-file
-                                   count)]
-    (add-task  date "08:00" "09:00" "Life" "Buy a House")
-    (is (= (+ initial-count 1) (->> (str global/db-root "/" date)
-                                    parse-task-file
-                                    count))))))
+          initial-count (->> (str db-root date)
+                             parse-task-file
+                             count)]
+      (add-task  date "08:00" "09:00" "Life" "Buy a House")
+      (is (= (+ initial-count 1) (->> (str db-root date)
+                                      parse-task-file
+                                      count))))))
 
-
-    
+(deftest delete-task-one
+  (with-redefs [db-root test-db-root]
+    (let [date "01-07-2020"
+          initial-count (->> (str db-root date)
+                             parse-task-file
+                             count)]
+      (delete-task date "09:00" "09:30")
+      (is (= (- initial-count 1) (->> (str db-root date)
+                                      parse-task-file
+                                      count))))))

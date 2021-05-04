@@ -41,6 +41,14 @@
                            [] filepaths)]
      (serialize/tabular-show-tasks tasks truncate-descriptions?))))
 
+(defmacro unless
+  "If test is false then
+  execute action"
+  {:style/indent 1}
+  [test & body]
+  `(if (not ~test)
+     ~@body))
+
 (comment
   (do
     (require '[clojure.tools.namespace.repl :refer [refresh]])

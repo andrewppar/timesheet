@@ -1,6 +1,8 @@
 (ns timesheet.serialize_tasks
-  (:require [clojure.data.json :as json]
-            [timesheet.task :as task]))
+  (:require
+            [clojure.data.json :as json]
+            [timesheet.task :as task]
+            [timesheet.validate :as validate]))
 
 
 ;;;;;;;;;;;;;;;
@@ -258,11 +260,13 @@
   [tasks]
   (let [groups (group-by :task-group tasks)]
     (json/write-str
-     (map (fn [[task-group group-tasks]]
-            {:group task-group
-             :tasks (map (fn [{:keys [start end description]}]
-                           {:start start
-                            :end end
-                            :description description})
-                         group-tasks)})
-          groups))))
+     {:task-info (map (fn [[task-group group-tasks]]
+                        {:group task-group
+                         :tasks (map (fn [{:keys [start end description]}]
+                                       {:start start
+                                        :end end
+                                        :description description})
+                                     group-tasks)})
+                      groups)
+      :total-time (task/sum-tasks tasks)
+      :gaps (validate/check-for-gaps tasks)})))
