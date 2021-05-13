@@ -133,17 +133,20 @@
   that its passed. If it finds one it deletes that task
   othwerwise it throws an error"
   [date start-time end-time]
-  (let [filepath     (task-file date)
-        tasks        (parse-task-file filepath)
-        delete-start (time/new-time-from-string start-time)
-        delete-end   (time/new-time-from-string end-time)
-        new-tasks    (filter (fn [task]
-                               (let [start (:start task)
-                                     end   (:end task)]
-                                 (not
-                                  (or (= start delete-start)
-                                      (= end   delete-end)))))
-                             tasks)]
+  (let [filepath       (task-file date)
+        tasks          (parse-task-file filepath)
+        delete-start   (time/new-time-from-string start-time)
+        delete-end     (time/new-time-from-string end-time)
+        [removed-tasks
+         new-tasks]    (reduce (fn [[removed-tasks new-tasks] task]
+                                 (let [start (:start task)
+                                       end   (:end task)]
+                                   (if (and
+                                        (= start delete-start)
+                                        (= end   delete-end))
+                                     [(conj removed-tasks task) new-tasks]
+                                     [removed-tasks (conj new-tasks task)])))
+         [[] []] tasks)]
     (if (= (count tasks) (count new-tasks))
       (throw
        (ex-info (str "Could not find a task to delete for "
@@ -153,4 +156,6 @@
                      " "
                      end-time)
                 {:causes #{:date date :start start-time :end end-time}}))
-      (-write-tasks new-tasks filepath))))
+      (do
+        (-write-tasks new-tasks filepath)
+        (serialize/tasks-by-date-and-group removed-tasks)))))
