@@ -78,9 +78,7 @@
 
 (defn tabular-show-tasks-at-date
   "Shows tasks associated with
-   a date.
-
-   Note: assumes that all the tasks
+   a date. Assumes that all the tasks
    that it is passed are in fact
    associated with the date it is
    passed"
@@ -184,7 +182,8 @@
     (map
      (fn [[group group-tasks]]
      {"group" group
-      "tasks" (-tasks-descriptions group-tasks)})
+      "tasks" (-tasks-descriptions group-tasks)
+      "group-time" (task/sum-tasks group-tasks)})
     groups)))
 
 (defn tasks-by-date-and-group
@@ -201,7 +200,7 @@
             (fn [[date date-tasks]]
               {"date" date
                "tasks" (tasks-by-group date-tasks)
-               "time" (task/sum-tasks tasks)})
+               "time" (task/sum-tasks date-tasks)})
             dates)}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -252,9 +251,8 @@
 
 (defn serialize-date
   "Generate JSON representing the
-  tasks for a particular date
-
-  NOTE: Assumes that the tasks are
+  tasks for a particular date.
+  Assumes that the tasks are
   all from the same date.
   "
   [tasks]
