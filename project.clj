@@ -14,7 +14,7 @@
                  [org.clojure/data.json "0.2.6"]
                  [org.clojure/tools.namespace "1.1.0"]]
   :main timesheet.core
-  :plugins [[cider/cider-nrepl "0.25.3"]]
+  :plugins [[cider/cider-nrepl "0.26.0"]]
   :target-path "target/%s"
   :jvm-opts ["-Dclojure.server.repl={:port 5555 :accept clojure.core.server/repl}"] ; notice that the map is not quoted.
   :profiles {:uberjar {:aot :all
