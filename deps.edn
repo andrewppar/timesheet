@@ -1,0 +1,35 @@
+{:paths ["src"]
+ :deps
+ {aysylu/loom                          {:mvn/version "1.0.2"}
+  compojure/compojure                  {:mvn/version "1.6.1"}
+  com.grammarly/omniconf               {:mvn/version "0.4.3"}
+  com.taoensso/timbre                  {:mvn/version "6.1.0"}
+  http-kit/http-kit                    {:mvn/version "2.3.0"}
+  integrant/integrant                  {:mvn/version "0.8.0"}
+  metosin/jsonista                     {:mvn/version "0.3.7"}
+  org.apache.lucene/lucene-core        {:mvn/version "9.2.0"}
+  org.apache.lucene/lucene-highlighter {:mvn/version "9.2.0"}
+  org.apache.lucene/lucene-queries     {:mvn/version "9.2.0"}
+  org.apache.lucene/lucene-queryparser {:mvn/version "9.2.0"}
+  org.apache.lucene/lucene-suggest     {:mvn/version "9.2.0"}
+  org.clojure/clojure                  {:mvn/version "1.11.1"}
+  ring/ring-defaults                   {:mvn/version "0.3.2"}
+  ring/ring-json                       {:mvn/version "0.5.1"}}
+ :aliases
+ {:prod/run     {:main-opts ["-m" "timesheet.core"]}
+  :prod/uberjar {:extra-deps {uberdeps/uberdeps {:mvn/version "0.1.4"}}
+                 :main-opts
+                 ["-m" "uberdeps.uberjar"
+                  "--target" "target/cdeps-0.1.0.jar"]}
+  :dev/repl {:extra-deps
+             {nrepl/nrepl       {:mvn/version "0.9.0"}
+              cider/cider-nrepl {:mvn/version "0.28.5"}}
+             :main-opts ["-m"
+                         "nrepl.cmdline"
+                         "--middleware"
+                         "[cider.nrepl/cider-middleware]"
+                         "-i"]}
+  :dev/test {:extra-deps {lambdaisland/kaocha
+                          {:mvn/version "1.71.1119"}}
+             :exec-fn kaocha.runner/exec-fn
+             :exec-args {}}}}

@@ -1,0 +1,1 @@
+{:clj-kondo/ignore [:redefined-var] :lint-as {timesheet.log/defn-logged clj-kondo.lint-as/def-catch-all}}

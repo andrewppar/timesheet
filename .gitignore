@@ -14,3 +14,8 @@ pom.xml.asc
 *.org
 org-files/
 /.lsp/
+.cpcache
+.clj-kondo/.cache
+.clj-kondo/taoensso
+logs
+scratch
