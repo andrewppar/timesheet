@@ -1,8 +1,12 @@
 name: Run Timesheet Tests
 
-jobs: 
-  clojure: 
-  strategy:
+on: [push]
+
+jobs:
+
+  clojure:
+
+    strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
 
@@ -28,5 +32,5 @@ jobs:
           # to always provision the latest version
           cli: 1.10.1.693              # Clojure CLI based on tools.deps
 
-      - name: Run Tests
-        run: clj -X:dev/test
+       - name: Run Tests
+          run: clj -X:dev/test
