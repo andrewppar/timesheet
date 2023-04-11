@@ -11,11 +11,11 @@
 (deftest assert-test
   (let [date "03-22-2023"]
     (assert/assert! [date "21:00" "21:30" "Test" "Ran a test"])
-    (let [result (query/run ["Test"] date date)]
+    (let [result (query/run ["Test"] date date nil)]
       (is (> (count result) 0)))))
 
 (deftest retract-test
   (let [date "03-22-2032"]
     (assert/retract! [date "21:00" "21:30"])
-    (let [result (query/run ["Test"] date date)]
+    (let [result (query/run ["Test"] date date nil)]
       (is (= (count result) 0)))))
