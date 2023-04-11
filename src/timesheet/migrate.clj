@@ -1,8 +1,12 @@
 (ns timesheet.migrate
   (:require
    [clojure.java.io :as io]
+   [clojure.string :as str]
    [timesheet.assert :as assert]
    [timesheet.legacy-parser :as lp]
+   [timesheet.query :as query]
+   [timesheet.state :as state]
+   [timesheet.taxonomy :as tax]
    [timesheet.time :as time]))
 
 
@@ -61,13 +65,41 @@
   ())
 
 
+(defn earlier-time? [time-one time-two]
+  (time/before? time-one time-two))
 
+(defn date-to-legacy-db! [tasks base-directory]
+  (let [date   (get (first tasks) :date)
+        groups (group-by :group tasks)]
+    (spit
+     (format "%s/%s" base-directory date)
+     (reduce-kv
+      (fn [result group tasks]
+        (let [sorted-tasks (sort-by :start earlier-time? tasks)
+              start        (format "%s{%s\n" result group)
+              end          "}\n\n"]
+          (str start
+               (->> sorted-tasks
+                    (mapv
+                     (fn [{:keys [start end description]}]
+                       (format "%s -- %s * %s" start end description)))
+                    (str/join "\n"))
+               end)))
+      ""
+      groups))))
 
-
-
-
+(defn to-legacy-db! [dates base-directory]
+  (let [groups        (tax/groups (state/taxonomy))
+        sorted-dates  (sort earlier-time? dates)
+        tasks         (query/run groups
+                        (first sorted-dates) (last sorted-dates) nil)
+        grouped-tasks (group-by :date tasks)]
+    (pmap
+     (fn [date]
+       (date-to-legacy-db! (get grouped-tasks date) base-directory))
+     dates)))
 (comment
   (migrate-legacy-db
    "/Users/andrewparisi/Documents/records/timesheet"
-   "03-01-2019" "07-01-2023")
+   ["03-01-2019" "07-01-2023"])
   )

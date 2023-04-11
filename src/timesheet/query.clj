@@ -8,6 +8,7 @@
   (:import
    (org.apache.lucene.document IntPoint)
    (org.apache.lucene.index Term)
+   (org.apache.lucene.queryparser.classic QueryParser)
    (org.apache.lucene.search
     IndexSearcher BooleanClause$Occur
     BooleanQuery$Builder ScoreDoc TopDocs TermQuery)))
@@ -130,8 +131,8 @@
 
 (defn ^:private generate-task-query
   "Generate a query for tasks between `start-date` and `end-date`
-  with any of `groups`."
-  [groups start-date end-date]
+  with any of `groups` and matching `description`."
+  [groups start-date end-date description]
   (let [start          (generate-query-date start-date)
         end            (generate-query-date end-date)
         range-query    (IntPoint/newRangeQuery "date" start end)
@@ -145,14 +146,19 @@
      groups)
     (.add builder (.build group-builder) BooleanClause$Occur/MUST)
     (.add builder range-query BooleanClause$Occur/MUST)
+    (when description
+      (let [term (-> "description"
+                     (QueryParser. (index/analyzer))
+                     (.parse description))]
+        (.add builder term BooleanClause$Occur/MUST)))
     (.build builder)))
 
 (defn run
   "Run a query against the timesheet database"
-  [groups start end]
+  [groups start end description]
       ;;{start  "10-11-1987"
       ;; end    (today)}}]
-  (let [query     (generate-task-query groups start end)
+  (let [query     (generate-task-query groups start end description)
          searcher  (index/searcher)
          hits      (config/get :hits-per-page)]
          (-> searcher

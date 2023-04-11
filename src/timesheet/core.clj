@@ -78,15 +78,19 @@
     4. `:end-date` - The last date to return results from. The default
         date is `:today`.
     5. `:end-time` - The last time to return results from. The default
-        time is `23:59`."
+        time is `23:59`.
+    6. `:text` - The text to match on. If no text is specified then
+        all text is matched."
   {:level :debug
    :result-fn count}
-  [& {:keys [groups start-date start-time end-date end-time] :or
-    {groups :all
-     start-date "10-11-1987"
-     start-time "00:00"
-     end-date   :today
-     end-time   "23:59"}}]
+  [& {:keys
+      [groups start-date start-time end-date end-time description] :or
+      {groups :all
+       start-date "10-11-1987"
+       start-time "00:00"
+       end-date   :today
+       end-time   "23:59"
+       }}]
 
   (let [adjusted-start  (if (= start-date :today) (time/today) start-date)
         adjusted-end    (if (= end-date :today) (time/today) end-date)
@@ -96,7 +100,7 @@
     ;; TODO: Maybe this and the above line should be part of a transducer
     (remove
      (partial drop-task? adjusted-start adjusted-end start-time end-time)
-     (query/run adjusted-groups adjusted-start adjusted-end))))
+     (query/run adjusted-groups adjusted-start adjusted-end description))))
 
 ;;; Migrate
 
@@ -109,6 +113,12 @@
 
 
 ;;; Routes
+
+(defn groups
+  [_]
+  {:status 200
+   :headers {"Content-Type" "text/json"}
+   :body (json/encode (all-groups))})
 
 (defn status
   "A Status Page"
@@ -137,13 +147,14 @@
      :headers {"Content-Type" "text/json"}
      :body (let [{:keys [start_date start_time
                          end_date end_time
-                         groups]} body]
+                         groups description]} body]
              (cond-> {}
-               start_date (assoc :start-date start_date)
-               start_time (assoc :start-time start_time)
-               end_date   (assoc :end-date end_date)
-               end_time   (assoc :end-time end_time)
-               groups     (assoc :groups   groups)
+               start_date  (assoc :start-date start_date)
+               start_time  (assoc :start-time start_time)
+               end_date    (assoc :end-date end_date)
+               end_time    (assoc :end-time end_time)
+               groups      (assoc :groups   groups)
+               description (assoc :description description)
                true       query
                true       json/encode))}))
 
@@ -202,6 +213,20 @@
   (create-or-delete-task
    request [:date :start_time :end_time] assert/retract!))
 
+(defn-logged backup
+  "Backup the `dates` to the traditional plain text storage form
+   of the database."
+  {:level :info
+   :result-fn count}
+  [request]
+  (let [body     (decode-body request)
+        dates    (get body :dates)
+        base-dir (get body :base_directory)]
+    (migrate/to-legacy-db! dates base-dir)
+    {:status 200
+     :headers {"Content-Type" "text/json"}
+     :body (json/encode {:success true})}))
+
 (defn not-found
   "The route doesn't exist"
   [_]
@@ -210,11 +235,14 @@
    :body {:status "Route does not exist."}})
 
 (compojure/defroutes routes
+  (compojure/GET "/groups" [] #'groups)
   (compojure/GET "/status" [] status)
-  (compojure/POST "/search" [] #'search)
   (compojure/POST "/add"    [] #'add-task)
   (compojure/POST "/delete" [] #'delete-task)
+  (compojure/POST "/search" [] #'search)
+  (compojure/POST "/backup" [] #'backup)
   (route/not-found not-found))
+
 
 
 (defn -main

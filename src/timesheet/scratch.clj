@@ -73,3 +73,23 @@
     (format "\"%s\" is not a time string")))
 
 (parse-time-string "02-02-2222")
+
+(comment
+  (defmacro dpf [form]
+    (let [function      (first form)
+          args          (rest form)
+          first-arg     (first args)
+          arg-format    "%s"
+          format-string (str "(%s | " arg-format ") => %s")]
+      `(let [result# ~form]
+         (println
+          (format ~format-string ~function ~first-arg result#))
+         result#)))
+
+
+  (let [a (+ 1 1)
+        b (dpf (+ a 2))]
+    (+ a b))
+
+
+  (dpf (+ 1 3)))
