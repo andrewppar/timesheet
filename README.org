@@ -1,0 +1,110 @@
+* Timesheet
+
+[[https://github.com/andrewppar/timesheet/actions/workflows/main.yml/badge.svg]]
+
+The backend for an application to store information about daily activities called tasks.
+
+** Installation
+
+This requires clojure version 1.11.0 or greater. Once clojure is installed the server can be run with
+
+#+NAME: run
+#+BEGIN_SRC bash
+clj -M:prod/run
+#+END_SRC
+
+A server will start on port 300 by default.
+
+** Configuration
+
+Every task is associated with a date, a start time, and end time, a group, and a description. All of which are indexed by lucene and searchable.
+
+Groups form a hierarchy and are configured with the =groups.edn= file found in the =resources= directory. The hierarchy is spcified using the =edn= format.
+
+Each level of groups corresponds to an edn map. The keys of the map specify a group name. The values for the key must be arrays. The empty array means that the group is a leaf group (or has not children). An array of strings specifies all the children of a group to be leaf groups. An array of maps indicates that there is more depth to the hierarchy for which the above comments apply.
+
+For example the edn
+#+NAME: groups
+#+BEGIN_SRC clojure
+  {"Personal" ["Home Improvement" "Projects"]
+   "Professional" {"Consulting" ["Company A" "Company B"]
+                   "Full Time Job" []}}
+#+END_SRC
+
+specifies a group hierarchy that has the following form
+
+#+NAME: hierarchy
+#+BEGIN_SRC txt
+|- Personal
+||- Home Improvement
+||- Projects
+|- Professional
+||- Consulting
+|||- Company A
+|||- Company B
+||- Full Time Job
+#+END_SRC
+
+** Usage
+
+** Why Group Hierarchy?
+
+Structuring the tasks that are done into a hierarchy means that searching for tasks according to the type of work done is easier. If, for example, I had to report all the consulting hours I worked (for both Company A and Compnay B) for tax purposes, I could get this information by looking at the tasks that are in the Consulting group. If, on the other hand, I have to bill only Company B, I can get this information by querying only tasks in that group.
+
+Timesheet handles all of the inference that's required for querying the hierarchy structure.
+
+** Tasks
+A task is a unit of work. The identity conditions for a task are its date, start time, and end time. A project may have many tasks associated with it. Note that a task is *not* an ideal unit of work, it is simply meant to be a record of what was accomplished for that particular timespan.
+
+** Endpoints
+
+The http endpoint has six routes:
+
+1. *GET* =/groups= - This returns all the groups that have been configured for your project.
+
+2. *GET* =/status= - A simple endpoint to indicate whether the service is up.
+
+3. *POST* =/add= - Add a task to the databse. This has five required fields:
+   1. =start_time= - When work for the task was started
+   2. =end_time= - When work for the task was ended
+   3. =date= - The date the work was done
+   4. =group= - The group for which the task was done
+   5. =description= - A free text description of the work that was done.
+
+4. *POST* =/delete= - Remove a task from the databse. The identity conditions for a task are it's start time, end time, and date. If there are multiple tasks in the descriptions in the database for the same time and date, both database entries are removed. This has three required fields:
+   1. =start_time= - The time work on the task was started
+   2. =end_time= - The time work on the task finished
+   3. =date= - The date on which the work occurred.
+
+5. *POST* =/search= - Search the database for tasks. There are no required fields for a search. The default behavior if no fields are specified is to get all the entries in the database.
+
+   Specifically:
+    1. =groups= - The groups to query using the taxonomy to get results from appropriate subgroups. The default is to use all groups in the database
+
+    2. =start_date= - The date to start the search on. The deafult is an arbitrary date long enough ago - *10-11-1987*
+
+    3. =start_time= - The time to start the search on. The default time is *00:00*
+
+    4. =end_date= - The last date to return results from. The default date is today.
+
+    5. =end_time= - The last time to return results from. The default time is *23:59*.
+
+    6. =description= - The text to match on. If no text is specified then all text is matched.
+
+6. *POST* =/backup= - This endpoint allows users to back up their database entries as plain text in the event that they want to transfer them to something other than a lucene database.
+
+
+## License
+
+Copyright © 2021-2023 Andrew Parisi
+
+This program and the accompanying materials are made available under the
+terms of the Eclipse Public License 2.0 which is available at
+http://www.eclipse.org/legal/epl-2.0.
+
+This Source Code may also be made available under the following Secondary
+Licenses when the conditions for such availability set forth in the Eclipse
+Public License, v. 2.0 are satisfied: GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or (at your
+option) any later version, with the GNU Classpath Exception which is available
+at https://www.gnu.org/software/classpath/license.html.
