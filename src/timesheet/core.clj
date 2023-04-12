@@ -79,8 +79,8 @@
         date is `:today`.
     5. `:end-time` - The last time to return results from. The default
         time is `23:59`.
-    6. `:text` - The text to match on. If no text is specified then
-        all text is matched."
+    6. `:description` - The text to match on. If no text is specified
+         then all text is matched."
   {:level :debug
    :result-fn count}
   [& {:keys
@@ -242,8 +242,6 @@
   (compojure/POST "/search" [] #'search)
   (compojure/POST "/backup" [] #'backup)
   (route/not-found not-found))
-
-
 
 (defn -main
   [& _]

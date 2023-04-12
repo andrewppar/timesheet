@@ -1,6 +1,9 @@
 name: Timesheet Test Workflow
 
-on: [push]
+on:
+  pull_request:
+    branches:
+      - main
 
 jobs:
 
