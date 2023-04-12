@@ -1,198 +1,83 @@
 (ns timesheet.time
-  (:require [clojure.string :refer [split]]))
+  (:import (java.time LocalDate LocalTime)
+           (java.time.format DateTimeFormatter)))
 
-(defrecord Time [hour minute]
-  Object
-  (toString [_]
-    (let [minute-string (if (< minute 10)
-                          (str 0 minute)
-                          (str minute))
-          hour-string (if (< hour 10)
-                        (str 0 hour)
-                        (str hour))]
-      (str hour-string ":" minute-string))))
+(def ^:prviate date-formatter
+  (DateTimeFormatter/ofPattern "MM-dd-yyyy"))
 
-(defn new-time-from-string
-  "Contructor for the Time record from string"
-  [string]
-  (let [hour-minute (split string #":")
-        hour   (->> hour-minute first Integer/parseInt)
-        minute (->> hour-minute second Integer/parseInt)]
-    (when (or
-           (< hour 0)
-           (> hour 23))
+;; This may have to be a multimethod one day
+;; if we have different formatters
+(defn ^:private to-date [string]
+  (LocalDate/parse string date-formatter))
+
+(defn temporal-type
+  [object]
+  (cond (try (to-date object) (catch Exception _e false)) :date
+        (try (LocalTime/parse object) (catch Exception _e false)) :time
+        :else
+        (throw
+         (ex-info
+          (format "Cannot parse \"%s\" into either date or time." object)
+          ;; TODO: Put soething meaningful here
+          {}))))
+
+(defmulti before?
+  {:arglists '([item-one time-two])}
+  (fn [item-one item-two]
+    (if (= (temporal-type item-one) (temporal-type item-two))
+      (temporal-type item-one)
       (throw
-       (ex-info "Cannot parse hour-string to time"
-                {:causes #{:hour hour}})))
-    (when (or
-           (< minute 0)
-           (> minute 60))
-      (throw
-       (ex-info "Cannot parse minute-string to time"
-                {:causes #{:minute minute}})))
-    (->Time hour minute)))
+       (ex-info "Cannot compare temporal objects of different types"
+                {:caused-by `(= (type ~item-one) (type ~item-two))
+                 :type-one   (type item-one)
+                 :type-two   (type item-two)})))))
 
-(defn earlier?
-  "Check whether one time
-  is earlier than another"
+;; Time
+
+(defmethod before? :time
   [time-one time-two]
-  (let [hour-one (:hour time-one)
-        hour-two (:hour time-two)]
-    (cond (< hour-one hour-two) true
-          (> hour-one hour-two) false
-          (= hour-one hour-two) (<
-                                 (:minute time-one)
-                                 (:minute time-two)))))
+  (.isBefore (LocalTime/parse time-one)
+             (LocalTime/parse time-two)))
 
+;; Date
 
-;;;;;;;;;;;;;
-;;; Dates ;;;
-;;;;;;;;;;;;;
+(defn ^:private show-date [date]
+  (.format date-formatter date))
 
-(defrecord Date [year month day]
-  Object
-  (toString [_]
-    (let [month-string (if (< month 10) (str "0" month) (str month))
-          day-string (if (< day 10) (str "0" day) (str day))]
-    (str month-string "-" day-string "-" year))))
+(defn plus-days
+  "Get `n` days after `date`.
 
-(defn new-date-from-string
-  "Constructor for the Date record from string
+   Note: `date` is expected to be in \"MM-dd-yyyy\" format."
+  [date n]
+  (-> date
+      to-date
+      (.plusDays n)
+      show-date))
 
-  Expects dates of the form MM-DD-YYYY"
-  [string]
-  (let [month-day-year (split string #"-")
-        month (->> month-day-year first Integer/parseInt)
-        day   (->> month-day-year second Integer/parseInt)
-        year  (Integer/parseInt (nth month-day-year 2))]
-    (when (or (< month 1)
-              (> month 12))
-      (throw
-       (ex-info "Cannot parse month"
-                {:causes #{:month month}})))
-    (when (or (< day 0)
-              (> day 31))
-      (throw
-       (ex-info "Canonot parse day"
-                {:causes #{:day day}})))
-    ;; @todo write up a check for appropriate day for month,
-    ;; e.g. rule out 2-31
+(defn next-day
+  "Get the day after `date`.
 
-    (->Date year month day)))
-
-(def month-threshold-map
-  "A map of months to the number of days in them"
-  {(keyword (str 1)), 31
-   (keyword (str 2)), 28
-   (keyword (str 3)), 31
-   (keyword (str 4)), 30
-   (keyword (str 5)), 31
-   (keyword (str 6)), 30
-   (keyword (str 7)), 31
-   (keyword (str 8)), 31
-   (keyword (str 9)), 30
-   (keyword (str 10)), 31
-   (keyword (str 11)), 30
-   (keyword (str 12)), 31})
-
-
-(defn leap-year?
-  "Returns whether or not
-  an int representing a year
-  is a leap-year"
-  [year]
-  (=  (mod year 4) 0))
-
-
-(defn valid-date?
-  "Returns whether or not a
-  date record actually represents a date"
+   Note: `date` is expected to be in \"MM-dd-yyyy\" format."
   [date]
-  (let [{:keys [year month day]} date]
-    (cond  (and
-            (leap-year? year)
-            (= month 2)
-            (= day 29)) true
-           (or
-            (< month 1)
-            (> month 12)
-            (< day 1)) false
-           :else (<= day
-                     ((keyword (str month))
-                      month-threshold-map)))))
+  (plus-days date 1))
 
-(defn next-date
-  "Given a date get the next calendar date"
-  [date]
-  (if (not (valid-date? date))
-    (throw
-     (Exception. (format "%s is not a valid date" date)))
-    (let [{:keys [year month day]} date
-          max-day (if (and (= month 2) (leap-year? year))
-                    29
-                    ((keyword (str month)) month-threshold-map))]
-      (if (not (= day max-day))
-        (->Date year month (+ day 1))
-        (if (= month 12)
-          (->Date (+ year 1) 1 1)
-          (->Date year (+ month 1) 1))))))
-
-;; Date Comparator
-(defn date-earlier-than
-  "Compare two dates. Return true if
-   the first is earlier than the second.
-   Otherwise return false."
-  [date-one date-two]
-  (let [year-one  (:year date-one)
-        year-two  (:year date-two)
-        month-one (:month date-one)
-        month-two (:month date-two)
-        day-one   (:day date-one)
-        day-two   (:day date-two)]
-    (cond
-      (< year-one year-two) true
-      (> year-one year-two) false
-      :else (cond
-              (< month-one month-two) true
-              (> month-one month-two) false
-              :else (if (< day-one day-two)
-                      true
-                      false)))))
-
-;; Date Utilities
 (defn today
-  "Get todays date"
+  "Get the \"MM-dd-yyyy\" representation of today"
   []
-  (let [date-string (.format
-                     (java.text.SimpleDateFormat.
-                      "MM-dd-yyyy")
-                     (new java.util.Date))]
-    (new-date-from-string date-string)))
+  (.format date-formatter (LocalDate/now)))
 
-(defn -week
-  "Given a month and day generate the next
-   seven days"
-  [month day]
-  (map
-   (fn [offset]
-     (let [month-threshold ((keyword (str month)) month-threshold-map)
-           new-month    (if (> (+ offset day) month-threshold)
-                          (+ month 1)
-                          month)
-           new-day      (if (> (+ day offset) month-threshold)
-                          (- (+ day offset) month-threshold)
-                          (+ day offset))
-           month-string (if (> 10 new-month) (str "0" new-month) (str new-month))
-           day-string   (if (> 10 new-day) (str "0" new-day) (str new-day))]
-       (format "%s-%s-2021" month-string day-string)))
-   [0 1 2 3 4 5 6]))
+(defmethod before? :date
+  [date-one date-two]
+  (.isBefore (to-date date-one)
+             (to-date date-two)))
 
-(defn dates-in-range
-  "Get all the dates starting
-  from start-date until end-date
-  inclusive"
-  [start-date end-date]
-  (loop [current-date start-date acc []]
-    (if (= current-date end-date)
-      (conj acc current-date)
-      (recur (next-date current-date) (conj acc current-date)))))
+;; Generic
+
+(defn after?
+  "Check whether `object-one` and `object-two` are of the same type
+   and whether the first comes after the second."
+  [object-one object-two]
+  (not
+   (or
+    (= object-one object-two)
+    (before? object-one object-two))))

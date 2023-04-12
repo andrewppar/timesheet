@@ -1,0 +1,46 @@
+# status
+GET http://localhost:3000/status
+
+# search
+POST http://localhost:3000/search
+{"start_date": "05-24-2022",
+ "end_date": "05-24-2022",
+ "start_time": "09:00",
+ "end_time": "13:00",
+ "description": "dPs"
+ }
+
+# Add a task
+POST http://localhost:3000/add
+{"date": "03-30-2023",
+ "start_time": "16:30",
+ "end_time": "17:00",
+ "group": "Klezmer Archive",
+ "description": "Work on timesheet software."}
+
+# search for that task
+POST http://localhost:3000/search
+{"start_date": "03-25-2023",
+ "end_date": "03-25-2023",
+ "start_time": "16:30",
+ "group": "Cisco"
+ }
+
+# delete that task
+POST http://localhost:3000/delete
+{"date": "03-25-2023",
+ "start_time": "16:30",
+ "end_time": "17:00"}
+
+# search for that task again
+POST http://localhost:3000/search
+{"start_date": "03-25-2023",
+ "end_date": "03-25-2023",
+ "start_time": "16:30",
+ "group": "Cisco"
+ }
+
+# search
+POST http://localhost:3000/search
+{"start_date": "03-30-2023",
+ "end_date": "03-30-2023"}

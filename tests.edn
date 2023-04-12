@@ -1,0 +1,13 @@
+#kaocha/v1
+{
+ :tests [{:id          :integration
+          :test-paths  ["test"]
+          :src-paths   ["src"]
+          :ns-patterns ["integration-test"]}
+         {:id          :unit
+          :test-paths  ["test"]
+          :src-paths   ["src"]
+          :ns-patterns ["taxonomy-test"]}]
+ :color? true
+ :capture-output? true
+ }
