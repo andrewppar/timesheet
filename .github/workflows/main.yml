@@ -1,4 +1,4 @@
-name: Run Timesheet Tests
+name: Timesheet Test Workflow
 
 on: [push]
 
@@ -32,5 +32,5 @@ jobs:
           # to always provision the latest version
           cli: 1.10.1.693              # Clojure CLI based on tools.deps
 
-       - name: Run Tests
-          run: clj -X:dev/test
+      - name: Execute clojure code
+        run: clj -X:dev/test
