@@ -94,7 +94,7 @@ The http endpoint has six routes:
 6. *POST* =/backup= - This endpoint allows users to back up their database entries as plain text in the event that they want to transfer them to something other than a lucene database.
 
 
-## License
+** License
 
 Copyright © 2021-2023 Andrew Parisi
 
