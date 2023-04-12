@@ -33,4 +33,4 @@ jobs:
           cli: 1.10.1.693              # Clojure CLI based on tools.deps
 
       - name: Execute clojure code
-        run: clj -X:dev/test
+        run: clojure -X:dev/test
