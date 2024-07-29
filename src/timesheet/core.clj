@@ -139,8 +139,10 @@
   [body fields]
   (every? (fn [field] (get body field)) fields))
 
-(defn search
+(defn-logged search
   "Search the database."
+  {:level :info
+   :result-fn count}
   [request]
   (let [body (decode-body request)]
     {:status 200
@@ -194,21 +196,25 @@
                    :headers {"Content-Type" "text/json"}
                    :body (json/encode (into {} result))}))))
 
-(defn add-task
+(defn-logged add-task
     "Given a request containing a `date`, `start_time`,
   `end_time`, `group`, and `description` create a new
   entry in the database for the corresponding task."
+   {:level :info
+    :result-fn count}
   [request]
   (create-or-delete-task
    request
    [:date :start_time :end_time :group :description]
    assert/assert!))
 
-(defn delete-task
+(defn-logged delete-task
   "Remove a task from teh database.
 
   NOTE: The identity criteria for a task are completely
   temporal. No two tasks can be worked on with the same start and end."
+  {:level :info
+   :result-fn count}
   [request]
   (create-or-delete-task
    request [:date :start_time :end_time] assert/retract!))
