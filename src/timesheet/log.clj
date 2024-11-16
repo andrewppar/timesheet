@@ -8,7 +8,8 @@
 
 (defn ^:private json-output [{:keys [level msg_ instant]}]
   (let [event (read-string (force msg_))]
-    (json/encode {:event event :level level :time  instant})))
+    (format "%s: %s - %s" instant (name level) (json/encode event))))
+;;    (json/encode {:event event :level level :time  instant})))
 
 (defn init!
   ([]
